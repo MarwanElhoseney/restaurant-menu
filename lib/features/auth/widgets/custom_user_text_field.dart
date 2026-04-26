@@ -5,20 +5,24 @@ class CustomUserTextField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.label,
+    this.textInputType,
   });
 
   final TextEditingController controller;
   String label;
+  final TextInputType? textInputType;
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      keyboardType: textInputType,
       controller: controller,
       cursorColor: Colors.white,
       cursorWidth: 20,
       style: TextStyle(color: Colors.white),
 
       decoration: InputDecoration(
+        contentPadding: EdgeInsets.symmetric(horizontal: 20,),
         labelText: label,
         labelStyle: TextStyle(color: Colors.white),
         enabledBorder: OutlineInputBorder(
