@@ -7,6 +7,8 @@ import 'package:restaurant_app/features/auth/data/user_model.dart';
 
 class AuthRepo {
   ApiService apiService = ApiService();
+  bool isGuest = false;
+  UserModel? _currentUser;
 
   Future<UserModel?> login(String email, String password) async {
     try {
@@ -29,6 +31,8 @@ class AuthRepo {
         if (user.token != null) {
           await PrefHelper.saveToken(user.token!);
         }
+        isGuest = false;
+        _currentUser = user;
         return user;
       } else {
         throw ApiError(message: "UnExpected Error From Server");
@@ -63,6 +67,8 @@ class AuthRepo {
         if (user.token != null) {
           await PrefHelper.saveToken(user.token!);
         }
+        isGuest = false;
+        _currentUser = user;
         return user;
       } else {
         throw ApiError(message: "UnExpected Error From Server");
@@ -76,8 +82,14 @@ class AuthRepo {
 
   Future<UserModel?> getProfileData() async {
     try {
+      final token = await PrefHelper.getToken();
+      if (token == null || token == "guest") {
+        return null;
+      }
       final response = await apiService.get("/profile");
-      return UserModel.fromJson(response["data"]);
+      final user = UserModel.fromJson(response["data"]);
+      _currentUser = user;
+      return user;
     } on DioError catch (e) {
       throw ApiExceptions.handleError(e);
     } catch (e) {
@@ -117,7 +129,9 @@ class AuthRepo {
         if (coder != 200 && coder != 201) {
           throw ApiError(message: msg ?? "Unknown error");
         }
-        return UserModel.fromJson(data);
+        final updateUser = UserModel.fromJson(data);
+        _currentUser = updateUser;
+        return updateUser;
       } else {
         throw ApiError(message: "Invalid Error from here");
       }
@@ -128,4 +142,44 @@ class AuthRepo {
     }
     return null;
   }
+
+  Future<void> logout() async {
+    final response = await apiService.post("/logout", {});
+    if (response['data'] != null) {
+      throw ApiError(message: "error");
+    }
+    await PrefHelper.clearToken();
+    _currentUser = null;
+    isGuest = true;
+  }
+
+  Future<void> continueAsGuest() async {
+    isGuest = true;
+    _currentUser = null;
+    await PrefHelper.saveToken("guest");
+  }
+
+  Future<UserModel?> autoLogin() async {
+    final token = await PrefHelper.getToken();
+    if (token == null || token == "guest") {
+      isGuest = true;
+      _currentUser = null;
+      return null;
+    }
+    isGuest = false;
+    try {
+      final user = await getProfileData();
+      _currentUser = user;
+      return user;
+    } catch (_) {
+      await PrefHelper.clearToken();
+      isGuest = true;
+      _currentUser = null;
+      return null;
+    }
+  }
+
+  UserModel? get currentUser => _currentUser;
+
+  bool get isLoggedIn => !isGuest && _currentUser != null;
 }
