@@ -20,17 +20,22 @@ class AuthRepo {
       if (response is ApiError) {
         throw response;
       }
+
       if (response is Map<String, dynamic>) {
         final msg = response["message"];
         final code = response["code"];
         final data = response["data"];
+
         if (code != 200 && code != 201) {
           throw ApiError(message: msg ?? "Unknown error");
         }
+
         final user = UserModel.fromJson(data);
+
         if (user.token != null) {
           await PrefHelper.saveToken(user.token!);
         }
+
         isGuest = false;
         _currentUser = user;
         return user;
@@ -55,18 +60,23 @@ class AuthRepo {
       if (response is ApiError) {
         throw response;
       }
+
       if (response is Map<String, dynamic>) {
         final msg = response["message"];
         final code = response["code"];
-        final coder = int.tryParse(code);
         final data = response["data"];
+        final coder = int.tryParse(code.toString());
+
         if (coder != 200 && coder != 201) {
           throw ApiError(message: msg ?? "Unknown error");
         }
+
         final user = UserModel.fromJson(data);
+
         if (user.token != null) {
           await PrefHelper.saveToken(user.token!);
         }
+
         isGuest = false;
         _currentUser = user;
         return user;
@@ -83,11 +93,14 @@ class AuthRepo {
   Future<UserModel?> getProfileData() async {
     try {
       final token = await PrefHelper.getToken();
+
       if (token == null || token == "guest") {
         return null;
       }
+
       final response = await apiService.get("/profile");
       final user = UserModel.fromJson(response["data"]);
+
       _currentUser = user;
       return user;
     } on DioError catch (e) {
@@ -118,39 +131,43 @@ class AuthRepo {
       });
 
       final response = await apiService.post("/update-profile", formData);
+
       if (response is ApiError) {
         throw response;
       }
+
       if (response is Map<String, dynamic>) {
         final msg = response["message"];
         final code = response["code"];
         final data = response["data"];
-        final coder = int.tryParse(code);
+        final coder = int.tryParse(code.toString());
+
         if (coder != 200 && coder != 201) {
           throw ApiError(message: msg ?? "Unknown error");
         }
+
         final updateUser = UserModel.fromJson(data);
         _currentUser = updateUser;
+
         return updateUser;
       } else {
-        throw ApiError(message: "Invalid Error from here");
+        throw ApiError(message: "Invalid Error from Server");
       }
     } on DioError catch (e) {
       throw ApiExceptions.handleError(e);
     } catch (e) {
       throw ApiError(message: e.toString());
     }
-    return null;
   }
 
   Future<void> logout() async {
-    final response = await apiService.post("/logout", {});
-    if (response['data'] != null) {
-      throw ApiError(message: "error");
-    }
+    try {
+      await apiService.post("/logout", {});
+    } catch (_) {}
+
     await PrefHelper.clearToken();
     _currentUser = null;
-    isGuest = true;
+    isGuest = false;
   }
 
   Future<void> continueAsGuest() async {
@@ -161,19 +178,30 @@ class AuthRepo {
 
   Future<UserModel?> autoLogin() async {
     final token = await PrefHelper.getToken();
-    if (token == null || token == "guest") {
+
+    if (token == null) {
+      isGuest = false;
+      _currentUser = null;
+      return null;
+    }
+
+    // Guest mode
+    if (token == "guest") {
       isGuest = true;
       _currentUser = null;
       return null;
     }
+
+    // Logged in user
     isGuest = false;
+
     try {
       final user = await getProfileData();
       _currentUser = user;
       return user;
     } catch (_) {
       await PrefHelper.clearToken();
-      isGuest = true;
+      isGuest = false;
       _currentUser = null;
       return null;
     }

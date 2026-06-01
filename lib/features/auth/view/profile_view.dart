@@ -28,37 +28,70 @@ class _ProfileViewState extends State<ProfileView> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _address = TextEditingController();
   final TextEditingController _visa = TextEditingController();
+
   UserModel? userModel;
   bool isLoading = false;
-
-  AuthRepo authRepo = AuthRepo();
-  String? selectedImage;
   bool isGuest = false;
+  bool isLogoutLoading = false;
 
-  Future<void> autoLogin() async {
-    final user = await authRepo.autoLogin();
-    setState(() {
-      isGuest = authRepo.isGuest;
-    });
-    if (user != null) {
+  final AuthRepo authRepo = AuthRepo();
+  String? selectedImage;
+
+  Future<void> loadProfile() async {
+    try {
+      final user = await authRepo.autoLogin();
+
+      if (!mounted) return;
+
       setState(() {
+        isGuest = authRepo.isGuest;
         userModel = user;
       });
+
+      if (user != null) {
+        _name.text = user.name;
+        _email.text = user.email;
+        _address.text = user.address ?? "";
+        _visa.text = user.visa ?? "";
+      }
+    } catch (e) {
+      String errorMsg = "Error in profile";
+      if (e is ApiError) {
+        errorMsg = e.message;
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        customSnack(errorMsg),
+      );
     }
   }
 
   Future<void> getProfileData() async {
     try {
       final user = await authRepo.getProfileData();
-      setState(() {
-        userModel = user;
-      });
+
+      if (!mounted) return;
+
+      if (user != null) {
+        setState(() {
+          userModel = user;
+        });
+
+        _name.text = user.name;
+        _email.text = user.email;
+        _address.text = user.address ?? "";
+        _visa.text = user.visa ?? "";
+      }
     } catch (e) {
       String errorMsg = "Error in profile";
       if (e is ApiError) {
         errorMsg = e.message;
       }
-      ScaffoldMessenger.of(context).showSnackBar(CustomSnack(errorMsg));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        customSnack(errorMsg),
+      );
     }
   }
 
@@ -75,246 +108,324 @@ class _ProfileViewState extends State<ProfileView> {
         visa: _visa.text.trim(),
         imagePath: selectedImage,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-          CustomSnack("profile updated successfully"));
 
-      setState(() {
-        isLoading = false;
-      });
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        customSnack("Profile updated successfully"),
+      );
 
       setState(() {
         userModel = user;
+        isLoading = false;
       });
+
       await getProfileData();
     } catch (e) {
       setState(() {
         isLoading = false;
       });
+
       String errorMsg = "Error in profile";
       if (e is ApiError) {
         errorMsg = e.message;
       }
-      ScaffoldMessenger.of(context).showSnackBar(CustomSnack(errorMsg));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        customSnack(errorMsg),
+      );
     }
   }
 
   Future<void> pickImage() async {
-    final pickedimage = await ImagePicker().pickImage(
-        source: ImageSource.gallery);
-    if (pickedimage != null) {
+    final pickedImage = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedImage != null) {
       setState(() {
-        selectedImage = pickedimage.path;
+        selectedImage = pickedImage.path;
       });
     }
   }
 
   Future<void> logout() async {
-    await authRepo.logout();
-    await Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (c) => LoginView()));
-  }
+    setState(() {
+      isLogoutLoading = true;
+    });
 
+    try {
+      await authRepo.logout();
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (c) => LoginView()),
+      );
+    } catch (e) {
+      String errorMsg = "Logout failed";
+      if (e is ApiError) {
+        errorMsg = e.message;
+      }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        customSnack(errorMsg),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLogoutLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
-    autoLogin();
-    getProfileData().then((v) {
-      _name.text = userModel?.name.toString() ?? "";
-      _email.text = userModel?.email.toString() ?? "";
-      _address.text = userModel?.address.toString() ?? "";
-    });
-
-
     super.initState();
+    loadProfile();
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _address.dispose();
+    _visa.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!isGuest) {
-      return RefreshIndicator(
+    if (isGuest) {
+      return Scaffold(
+        body: Center(
+          child: Text("Guest Mode"),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      backgroundColor: AppColors.primary,
+      color: Colors.white,
+      displacement: 60,
+      onRefresh: () async {
+        await getProfileData();
+      },
+      child: Scaffold(
         backgroundColor: AppColors.primary,
-        color: Colors.white,
-        displacement: 60,
-        onRefresh: () async {
-          await getProfileData();
-        },
-        child: Scaffold(
+        appBar: AppBar(
           backgroundColor: AppColors.primary,
-
-          appBar: AppBar(
-            backgroundColor: AppColors.primary,
-            scrolledUnderElevation: 0.0,
-            leading: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Icon(Icons.arrow_back, color: Colors.white),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0, vertical: 0),
-                child: SvgPicture.asset("assets/test/settings.svg", width: 20),
-              ),
-            ],
+          scrolledUnderElevation: 0.0,
+          leading: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: const Icon(Icons.arrow_back, color: Colors.white),
           ),
-          body: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15.0),
-            child: SingleChildScrollView(
-
-
-              child: Skeletonizer(
-                enabled: userModel == null || userModel?.image?.isEmpty == true,
-                child: Column(
-                  children: [
-                    Center(
-
-                      child: Container(
-                          height: 120,
-                          width: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                                image: FileImage(
-                                  File(selectedImage ?? ""),
-                                ),
-                                fit: BoxFit.cover
-                            ),
-                            border: Border.all(width: 3, color: AppColors
-                                .primary),
-                            color: Colors.grey.shade300,
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: selectedImage != null
-                              ? Image.file(
-                            File(selectedImage!), fit: BoxFit.cover,)
-                              : (userModel?.image != null &&
-                              userModel!.image!.isNotEmpty)
-                              ? Image.network(
-                            userModel!.image!, fit: BoxFit.cover,
-                            errorBuilder: (context, err, builder) =>
-                                Icon(Icons.person),)
-                              : Icon(Icons.person)
-                      ),
-                    ),
-                    Gap(10),
-
-                    CustomButton(
-                        onTap: pickImage,
-                        radius: 50,
-                        width: 138,
-                        height: 40,
-                        text: "upload image"),
-                    Gap(30),
-                    CustomUserTextField(controller: _name, label: "Name"),
-                    Gap(25),
-                    CustomUserTextField(controller: _email, label: "Email"),
-                    Gap(25),
-
-                    CustomUserTextField(controller: _address, label: "Address"),
-                    Gap(20),
-                    Divider(),
-                    Gap(10),
-
-
-                    userModel?.visa == null ?
-                    CustomUserTextField(
-                      controller: _visa, label: "ADD VISA CARD"
-                      , textInputType: TextInputType.number,
-                    )
-                        : ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 2,
-                        horizontal: 16,
-                      ),
-                      tileColor: Color(0xffF3F4F6),
-                      leading: Image.asset(
-                          "assets/test/image 13.png", width: 50),
-
-                      title: CustomText(
-                          text: "Debit Card", color: Colors.black),
-                      subtitle: CustomText(
-                        text: userModel?.visa ?? "".toString() ?? "",
-                        color: Colors.black,
-                      ),
-                      trailing: CustomText(
-                          text: "Default", color: Colors.black),
-                    ),
-
-
-                    Gap(400),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          bottomSheet: Container(
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(color: Colors.grey.shade800, blurRadius: 20)
-              ],
-            ),
-            child: Padding(
+          actions: [
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              child: SvgPicture.asset(
+                "assets/test/settings.svg",
+                width: 20,
+              ),
+            ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+          child: SingleChildScrollView(
+            child: Skeletonizer(
+              enabled: userModel == null,
+              child: Column(
                 children: [
-
-                  GestureDetector(
-                    onTap: updateProfileData,
-
-                    child: isLoading
-                        ? CupertinoActivityIndicator()
-                        : Container(
-
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 15),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          CustomText(text: "Edit Profile", color: Colors.white),
-                          Gap(5),
-                          Icon(CupertinoIcons.pencil, color: Colors.white),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  GestureDetector(
-                    onTap: logout,
+                  Center(
                     child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 15),
+                      height: 120,
+                      width: 120,
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: AppColors.primary),
-                        borderRadius: BorderRadius.circular(8),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          width: 3,
+                          color: AppColors.primary,
+                        ),
+                        color: Colors.grey.shade300,
                       ),
-                      child: Row(
-                        children: [
-                          CustomText(text: "Logout", color: AppColors.primary),
-                          Gap(5),
-                          Icon(Icons.logout, color: AppColors.primary),
-                        ],
-                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: selectedImage != null
+                          ? Image.file(
+                        File(selectedImage!),
+                        fit: BoxFit.cover,
+                      )
+                          : (userModel?.image != null &&
+                          userModel!.image!.isNotEmpty)
+                          ? Image.network(
+                        userModel!.image!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.person),
+                      )
+                          : const Icon(Icons.person),
                     ),
                   ),
+                  const Gap(10),
+
+                  CustomButton(
+                    onTap: pickImage,
+                    radius: 50,
+                    width: 138,
+                    height: 40,
+                    text: "Upload Image",
+                  ),
+
+                  const Gap(30),
+
+                  CustomUserTextField(
+                    controller: _name,
+                    label: "Name",
+                  ),
+
+                  const Gap(25),
+
+                  CustomUserTextField(
+                    controller: _email,
+                    label: "Email",
+                  ),
+
+                  const Gap(25),
+
+                  CustomUserTextField(
+                    controller: _address,
+                    label: "Address",
+                  ),
+
+                  const Gap(20),
+                  const Divider(),
+                  const Gap(10),
+
+                  (userModel?.visa == null || userModel!.visa!.isEmpty)
+                      ? CustomUserTextField(
+                    controller: _visa,
+                    label: "ADD VISA CARD",
+                    textInputType: TextInputType.number,
+                  )
+                      : ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 2,
+                      horizontal: 16,
+                    ),
+                    tileColor: const Color(0xffF3F4F6),
+                    leading: Image.asset(
+                      "assets/test/image 13.png",
+                      width: 50,
+                    ),
+                    title: CustomText(
+                      text: "Debit Card",
+                      color: Colors.black,
+                    ),
+                    subtitle: CustomText(
+                      text: userModel?.visa ?? "",
+                      color: Colors.black,
+                    ),
+                    trailing: CustomText(
+                      text: "Default",
+                      color: Colors.black,
+                    ),
+                  ),
+
+                  const Gap(400),
                 ],
               ),
             ),
           ),
         ),
-      );
-    }
-    elseIf(isGuest) {
-      return Center(child: Text("Guest Mode"),);
-    }
-    return SizedBox();
+        bottomSheet: Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade800,
+                blurRadius: 20,
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                GestureDetector(
+                  onTap: updateProfileData,
+                  child: isLoading
+                      ? const CupertinoActivityIndicator()
+                      : Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 15,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        CustomText(
+                          text: "Edit Profile",
+                          color: Colors.white,
+                        ),
+                        const Gap(5),
+                        const Icon(
+                          CupertinoIcons.pencil,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: isLogoutLoading ? null : logout,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 15,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: AppColors.primary),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        isLogoutLoading
+                            ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CupertinoActivityIndicator(),
+                        )
+                            : const Icon(
+                          Icons.logout,
+                          color: Colors.green,
+                        ),
+                        const Gap(5),
+                        CustomText(
+                          text: isLogoutLoading ? "Logging out..." : "Logout",
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

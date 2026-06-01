@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:restaurant_app/share/custom_text.dart';
 
-SnackBar CustomSnack(errorMsg) {
+SnackBar customSnack(errorMsg) {
   return SnackBar(
     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
     margin: EdgeInsets.only(bottom: 30, right: 20, left: 20),

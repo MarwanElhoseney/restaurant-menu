@@ -14,8 +14,10 @@ class CartItem extends StatelessWidget {
     this.onMinus,
     this.onRemove,
     required this.number,
+    required this.isLoading
   });
 
+  final bool isLoading;
   final String image;
   final String text;
   final String desc;
@@ -29,15 +31,15 @@ class CartItem extends StatelessWidget {
     return Card(
       color: Colors.white,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Image.asset(image),
-                CustomText(text: text, weight: FontWeight.bold),
+                Image.network(image, width: 100, height: 100,),
+                CustomText(text: text, weight: FontWeight.bold,),
                 CustomText(text: desc),
               ],
             ),
@@ -68,6 +70,7 @@ class CartItem extends StatelessWidget {
                     ),
                   ],
                 ),
+                SizedBox(height: 20),
                 GestureDetector(
                   onTap: onRemove,
                   child: Container(
@@ -78,7 +81,10 @@ class CartItem extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
-                      child: CustomText(text: "Remove", color: Colors.white),
+                      child:
+                      isLoading ? CupertinoActivityIndicator(
+                        color: Colors.white,) :
+                      CustomText(text: "Remove", color: Colors.white),
                     ),
                   ),
                 ),

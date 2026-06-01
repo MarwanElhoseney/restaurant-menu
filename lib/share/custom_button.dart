@@ -11,6 +11,7 @@ class CustomButton extends StatelessWidget {
     this.color,
     this.height,
     this.radius,
+    this.isLoading = false,
   });
 
   final String text;
@@ -19,20 +20,33 @@ class CustomButton extends StatelessWidget {
   final double? height;
   final Color? color;
   final double? radius;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         width: width,
         height: height ?? 50,
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           color: color ?? AppColors.primary,
           borderRadius: BorderRadius.circular(radius ?? 10),
         ),
-        child: Center(child: CustomText(text: text)),
+        child: Center(
+          child:
+              isLoading
+                  ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                  : CustomText(text: text),
+        ),
       ),
     );
   }

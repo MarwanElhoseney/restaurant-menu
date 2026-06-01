@@ -3,10 +3,12 @@ import 'package:restaurant_app/core/constants/app_colors.dart';
 import 'package:restaurant_app/share/custom_text.dart';
 
 class SpicySlider extends StatefulWidget {
-  const SpicySlider({super.key, required this.value, required this.onChanged});
+  const SpicySlider(
+      {super.key, required this.value, required this.onChanged, required this.image});
 
   final double value;
   final ValueChanged<double> onChanged;
+  final String image;
 
   @override
   State<SpicySlider> createState() => _SpicySliderState();
@@ -17,12 +19,12 @@ class _SpicySliderState extends State<SpicySlider> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Image.asset("assets/test/pngwing 12.png", height: 250),
+        Image.network(widget.image, height: 250, width: 150,),
         Spacer(),
         Column(
           children: [
             CustomText(
-              text: "Customize Your Burger\n to Your\n Ultimate Experience",
+              text: "Customize Your spicy level",
             ),
             Slider(
               min: 0,
