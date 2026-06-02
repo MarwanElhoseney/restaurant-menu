@@ -188,7 +188,10 @@ class _CartViewState extends State<CartView> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const CheckoutView(),
+                    builder: (_) =>
+                        CheckoutView(
+                          totalPrice: getTotalPrice().toStringAsFixed(2),
+                        ),
                   ),
                 );
               },

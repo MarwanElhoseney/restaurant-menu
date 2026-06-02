@@ -14,14 +14,12 @@ class Root extends StatefulWidget {
 }
 
 class _RootState extends State<Root> {
-  late final PageController controller;
   late List<Widget> screens;
   int currentScreen = 0;
 
   @override
   void initState() {
     screens = [HomeView(), CartView(), OrderHistoryViews(), ProfileView()];
-    controller = PageController(initialPage: currentScreen);
     super.initState();
   }
 
@@ -30,9 +28,9 @@ class _RootState extends State<Root> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        body: PageView(
-          controller: controller,
-          physics: NeverScrollableScrollPhysics(),
+
+        body: IndexedStack(
+          index: currentScreen,
           children: screens,
         ),
         bottomNavigationBar: Container(
@@ -52,7 +50,6 @@ class _RootState extends State<Root> {
               setState(() {
                 currentScreen = index;
               });
-              controller.jumpToPage(currentScreen);
             },
             items: [
               BottomNavigationBarItem(

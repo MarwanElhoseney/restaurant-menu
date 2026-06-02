@@ -37,4 +37,17 @@ class ProductRepo {
       return [];
     }
   }
+
+  Future<List<ProductModel>> searchProduct(String name) async {
+    try {
+      final response = await _apiService.get(
+          "/product", params: {"name": name});
+
+      return (response["data"] as List)
+          .map((product) => ProductModel.fromJson(product))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
 }

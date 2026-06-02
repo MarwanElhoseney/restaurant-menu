@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
@@ -6,7 +5,9 @@ import 'package:restaurant_app/core/constants/app_colors.dart';
 import 'package:restaurant_app/share/custom_text.dart';
 
 class UserHeader extends StatelessWidget {
-  const UserHeader({super.key});
+  UserHeader({super.key, required this.userName, required this.userImage});
+
+  String userName, userImage;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +25,7 @@ class UserHeader extends StatelessWidget {
             ),
             Gap(5),
             CustomText(
-              text: "Hello",
+              text: "hello ${userName}",
               size: 16,
               weight: FontWeight.w500,
               color: Colors.grey.shade500,
@@ -34,8 +35,16 @@ class UserHeader extends StatelessWidget {
         Spacer(),
         CircleAvatar(
           radius: 31,
-          child: Icon(CupertinoIcons.person, color: Colors.white),
           backgroundColor: AppColors.primary,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(30),
+            child: Image.network(
+              userImage ?? "",
+              fit: BoxFit.cover,
+              errorBuilder: (context, err, builder) =>
+                  Icon(Icons.person, color: Colors.white,),),
+          ),
+
         ),
       ],
     );

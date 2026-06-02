@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:restaurant_app/core/network/api_error.dart';
+import 'package:restaurant_app/features/auth/data/auth_repo.dart';
+import 'package:restaurant_app/features/auth/data/user_model.dart';
 import 'package:restaurant_app/features/home/data/model/product_model.dart';
 import 'package:restaurant_app/features/home/data/repo/product_repo.dart';
 import 'package:restaurant_app/features/home/widgets/card_item.dart';
@@ -7,6 +10,7 @@ import 'package:restaurant_app/features/home/widgets/food_categories.dart';
 import 'package:restaurant_app/features/home/widgets/search_field.dart';
 import 'package:restaurant_app/features/home/widgets/user_header.dart';
 import 'package:restaurant_app/features/product/views/product_details_view.dart';
+import 'package:restaurant_app/share/custom_snack.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -23,10 +27,36 @@ class _HomeViewState extends State<HomeView> {
   List<String> favoriteProducts = [];
   List<ProductModel>?products;
   ProductRepo productRepo = ProductRepo();
+  List<ProductModel>?allProducts;
+  final TextEditingController controller = TextEditingController();
+
+  UserModel? userModel;
+  final AuthRepo authRepo = AuthRepo();
+
+  Future<void> getProfileData() async {
+    try {
+      final user = await authRepo.getProfileData();
+
+
+      setState(() {
+        userModel = user;
+      });
+    } catch (e) {
+      String errorMsg = "Error in profile";
+      if (e is ApiError) {
+        errorMsg = e.message;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        customSnack(errorMsg),
+      );
+    }
+  }
 
   Future<void> getProducts() async {
     final res = await productRepo.getProducts();
     setState(() {
+      allProducts = res;
       products = res;
     });
   }
@@ -55,9 +85,10 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   void initState() {
-    super.initState();
+    getProfileData();
     getProducts();
     loadFavorites();
+    super.initState();
   }
 
   @override
@@ -83,7 +114,26 @@ class _HomeViewState extends State<HomeView> {
                   automaticallyImplyLeading: false,
                   flexibleSpace: Padding(
                     padding: EdgeInsets.only(top: 38, right: 20, left: 20),
-                    child: Column(children: [UserHeader(), SearchField()]),
+                    child: Column(children: [
+                      UserHeader(
+                        userName: userModel?.name ?? "",
+                        userImage: userModel?.image ?? "",
+
+
+                      )
+                      , SearchField(
+                        controller: controller,
+                        onChanged: (value) {
+                          final query = value.toLowerCase();
+
+                          setState(() {
+                            products = allProducts?.where((p) =>
+                                p.name.toLowerCase().startsWith(query))
+                                .toList();
+                          });
+                        },
+                      )
+                    ]),
                   ),
                 ),
                 SliverToBoxAdapter(

@@ -5,9 +5,10 @@ import 'package:restaurant_app/core/network/dio_client.dart';
 class ApiService {
   final DioClient _dioClient = DioClient();
 
-  Future<dynamic> get(String endPoint) async {
+  Future<dynamic> get(String endPoint, {dynamic params}) async {
     try {
-      final response = await _dioClient.dio.get(endPoint);
+      final response = await _dioClient.dio.get(
+          endPoint, queryParameters: params);
       return response.data;
     } on DioError catch (e) {
       return ApiExceptions.handleError(e);

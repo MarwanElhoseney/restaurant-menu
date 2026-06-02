@@ -2,12 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:restaurant_app/core/constants/app_colors.dart';
+import 'package:restaurant_app/core/network/api_error.dart';
+import 'package:restaurant_app/features/auth/data/auth_repo.dart';
+import 'package:restaurant_app/features/auth/data/user_model.dart';
 import 'package:restaurant_app/features/checkout/widgets/order_details_widget.dart';
 import 'package:restaurant_app/share/custom_button.dart';
+import 'package:restaurant_app/share/custom_snack.dart';
 import 'package:restaurant_app/share/custom_text.dart';
 
 class CheckoutView extends StatefulWidget {
-  const CheckoutView({super.key});
+  const CheckoutView({super.key, required this.totalPrice});
+
+  final String totalPrice;
 
   @override
   State<CheckoutView> createState() => _CheckoutViewState();
@@ -15,8 +21,33 @@ class CheckoutView extends StatefulWidget {
 
 class _CheckoutViewState extends State<CheckoutView> {
   String selectedMethod = "Cash";
+  UserModel? userModel;
+  final AuthRepo authRepo = AuthRepo();
+
+  Future<void> getProfileData() async {
+    try {
+      final user = await authRepo.getProfileData();
+
+      setState(() {
+        userModel = user;
+      });
+    } catch (e) {
+      String errorMsg = "Error in profile";
+      if (e is ApiError) {
+        errorMsg = e.message;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(customSnack(errorMsg));
+    }
+  }
 
   @override
+  void initState() {
+    getProfileData();
+    super.initState();
+  }
+
+  @@override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -39,10 +70,11 @@ class _CheckoutViewState extends State<CheckoutView> {
                 weight: FontWeight.w500,
               ),
               OrderDetailsWidget(
-                order: "10.5",
+                order: widget.totalPrice ?? "18.5",
                 taxes: "3.85",
                 fees: "40.33",
-                total: "100",
+                total: (double.parse(widget.totalPrice) + 3.58 + 40.33)
+                    .toStringAsFixed(2),
               ),
               Gap(80),
 
@@ -84,7 +116,8 @@ class _CheckoutViewState extends State<CheckoutView> {
                 ),
               ),
               Gap(10),
-              ListTile(
+              userModel?.visa == null ? SizedBox()
+                  : ListTile(
                 onTap: () {
                   setState(() {
                     selectedMethod = "Visa";
@@ -105,7 +138,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 
                 title: Text("Debit Card"),
                 subtitle: CustomText(
-                  text: "**** ***** 2342",
+                  text: userModel?.visa ?? "",
                   color: Colors.white,
                 ),
                 trailing: Radio<String>(
@@ -160,7 +193,9 @@ class _CheckoutViewState extends State<CheckoutView> {
                 children: [
                   CustomText(text: "total", size: 15),
 
-                  CustomText(text: "\$ 18.9", size: 24),
+                  CustomText(
+                      text: (double.parse(widget.totalPrice) + 3.58 + 40.33)
+                          .toStringAsFixed(2), size: 24),
                 ],
               ),
               CustomButton(
