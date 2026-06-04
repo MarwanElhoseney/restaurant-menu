@@ -5,8 +5,7 @@ A full-featured Flutter restaurant ordering app with authentication, product bro
 ---
 
 ## 🎥 App Demo
-
-https://github.com/user-attachments/assets/7160471f-7469-4dac-9856-912f80e3c832
+https://github.com/user-attachments/assets/3da5df7d-3f00-459c-bdf8-49ae601ad5c9
 
 ---
 
