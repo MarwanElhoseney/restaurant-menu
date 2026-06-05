@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:restaurant_app/core/constants/app_colors.dart';
-import 'package:restaurant_app/share/custom_text.dart';
+import 'package:gap/gap.dart';
+
+import '../core/constants/app_colors.dart';
+import 'custom_text.dart';
 
 class CustomButton extends StatelessWidget {
   const CustomButton({
@@ -11,7 +13,9 @@ class CustomButton extends StatelessWidget {
     this.color,
     this.height,
     this.radius,
-    this.isLoading = false,
+    this.textColor,
+    this.widget,
+    this.gap,
   });
 
   final String text;
@@ -20,32 +24,32 @@ class CustomButton extends StatelessWidget {
   final double? height;
   final Color? color;
   final double? radius;
-  final bool isLoading;
+  final Color? textColor;
+  final Widget? widget;
+  final double? gap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isLoading ? null : onTap,
+      onTap: onTap,
       child: Container(
         width: width,
         height: height ?? 50,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: color ?? AppColors.primary,
           borderRadius: BorderRadius.circular(radius ?? 10),
         ),
-        child: Center(
-          child:
-              isLoading
-                  ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                  : CustomText(text: text),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CustomText(text: text,
+                color: textColor ?? Colors.white,
+                size: 14,
+                weight: FontWeight.w500),
+            Gap(gap ?? 0.0),
+            widget ?? SizedBox.shrink(),
+          ],
         ),
       ),
     );

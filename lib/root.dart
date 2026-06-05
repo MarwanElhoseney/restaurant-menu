@@ -4,7 +4,7 @@ import 'package:restaurant_app/core/constants/app_colors.dart';
 import 'package:restaurant_app/features/auth/view/profile_view.dart';
 import 'package:restaurant_app/features/cart/views/cart_view.dart';
 import 'package:restaurant_app/features/home/views/home_view.dart';
-import 'package:restaurant_app/features/orderHistory/views/order_history_views.dart';
+import 'package:restaurant_app/features/orders/views/order_history_views.dart';
 
 class Root extends StatefulWidget {
   const Root({super.key});

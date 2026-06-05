@@ -18,16 +18,16 @@ class OrderDetailsWidget extends StatelessWidget {
     return Column(
       children: [
         Gap(10),
-        checkoutWidget(order, "18.5", false, false),
+        checkoutWidget("order", order, false, false),
         Gap(10),
 
-        checkoutWidget(taxes, "3.5", false, false),
+        checkoutWidget("taxes", taxes, false, false),
         Gap(10),
 
-        checkoutWidget(fees, "2.4", false, false),
+        checkoutWidget("fees", fees, false, false),
         Divider(),
         Gap(10),
-        checkoutWidget(total, "100", true, false),
+        checkoutWidget("total", total, true, false),
         Gap(10),
         checkoutWidget("Estimated delivery time", "15-30 mins", true, true),
         Gap(10),

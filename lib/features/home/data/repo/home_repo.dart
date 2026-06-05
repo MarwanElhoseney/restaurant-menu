@@ -1,8 +1,10 @@
+import 'package:restaurant_app/core/network/api_error.dart';
 import 'package:restaurant_app/core/network/api_service.dart';
+import 'package:restaurant_app/features/cart/data/cart_model.dart';
 import 'package:restaurant_app/features/home/data/model/product_model.dart';
 import 'package:restaurant_app/features/home/data/model/topping_model.dart';
 
-class ProductRepo {
+class HomeRepo {
   ApiService _apiService = ApiService();
 
   Future<List<ProductModel>> getProducts() async {
@@ -38,6 +40,18 @@ class ProductRepo {
     }
   }
 
+  Future<void> addToCart(CartRequestModel cartData) async {
+    try {
+      final res = await _apiService.post("/cart/add", cartData.toJson());
+      if (res['code'] == 200 && res["data"] == null) {
+        throw ApiError(message: res["message"]);
+      }
+    } catch (e) {
+      throw ApiError(message: e.toString());
+    }
+  }
+
+
   Future<List<ProductModel>> searchProduct(String name) async {
     try {
       final response = await _apiService.get(
@@ -50,4 +64,5 @@ class ProductRepo {
       return [];
     }
   }
+
 }

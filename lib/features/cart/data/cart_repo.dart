@@ -5,16 +5,6 @@ import 'package:restaurant_app/features/cart/data/cart_model.dart';
 class CartRepo {
   final ApiService _apiService = ApiService();
 
-  Future<void> addToCart(CartRequestModel cartData) async {
-    try {
-      final res = await _apiService.post("/cart/add", cartData.toJson());
-      if (res['code'] == 200 && res["data"] == null) {
-        throw ApiError(message: res["message"]);
-      }
-    } catch (e) {
-      throw ApiError(message: e.toString());
-    }
-  }
 
   Future<GetCartResponse?> getCartData() async {
     try {

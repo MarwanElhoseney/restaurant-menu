@@ -5,7 +5,7 @@ import 'package:restaurant_app/core/constants/app_colors.dart';
 import 'package:restaurant_app/core/network/api_error.dart';
 import 'package:restaurant_app/features/auth/data/auth_repo.dart';
 import 'package:restaurant_app/features/auth/data/user_model.dart';
-import 'package:restaurant_app/features/checkout/widgets/order_details_widget.dart';
+import 'package:restaurant_app/features/orders/widgets/order_details_widget.dart';
 import 'package:restaurant_app/share/custom_button.dart';
 import 'package:restaurant_app/share/custom_snack.dart';
 import 'package:restaurant_app/share/custom_text.dart';
@@ -47,7 +47,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     super.initState();
   }
 
-  @@override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
